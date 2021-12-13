@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView iv_Photo;
     private String mNIDReader = "/" + "NASample";
     private String RootFolder = Environment.getExternalStorageDirectory() + mNIDReader;
-    private MyHandler mHandler;
+    private MyHandler mHandler;  // มันคือ message handler
     private Handler handler = new Handler();
     private int iRes = -999;
     private ArrayList<String> aRes = null;
@@ -151,26 +151,39 @@ public class MainActivity extends AppCompatActivity {
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("NASample " + NAVersion);
+
         myThread = new HandlerThread("Worker Thread");
         myThread.start();
         Looper mLooper = myThread.getLooper();
         mHandler = new MyHandler(mLooper);
+
         tv_Reader = findViewById(R.id.tv_Reader);
         tv_SoftwareInfo = findViewById(R.id.tv_SoftwareInfo);
         tv_LicenseInfo = findViewById(R.id.tv_LicenseInfo);
         tv_Reader = findViewById(R.id.tv_Reader);
         bt_SelectReader = findViewById(R.id.bt_SelectReader);
+
+
         bt_SelectReader.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+            // TODO: ตรงนี้น่าจะเป็นส่วนที่ดักจับ event ว่ากดปุ่ม Find Reader รึยัง ถ้ากดแล้วจะโชว์ "Reader scanning..."
+            // TODO: และถ้ายังไม่ได้ Enable ไว้มันจะขึ้น popup ของ NASample เพื่อให้ Allow ก่อน
+
                 tv_Result.setText("");
                 tv_Result.setClickable(false);
-                iv_Photo.setImageResource(R.mipmap.nas);
-                Message msg = mHandler.obtainMessage();
-                msg.obj = "findreader";
+                iv_Photo.setImageResource(R.mipmap.nas);  // ดึงรูปภาพออกมา ที่จะมาแสดงในช่อง view ของ UI
+
+                // TODO: พวก Message 3 บรรทัดล่างนี้ สำหรับให้มี popup เพื่อหา card reader ตอนกดปุ่ม Find Reader นะ
+                Message msg = mHandler.obtainMessage();  // ตัวเก็บ message สร้าง object ของ Message ขึ้นมา
+                msg.obj = "findreader";  // ถ้า message เท่ากับ findreader ก็จะไป switch case line 452 ต่อนะ
+                System.out.println("msg => " + msg);
                 mHandler.sendMessage(msg);
+
             }
         });
+
+
         bt_Read = findViewById(R.id.bt_Read);
         bt_Read.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -435,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
             super(myLooper);
         }
 
-        public void handleMessage(Message msg) {
+        public void handleMessage(Message msg) {  // TODO: รับ msg เข้ามา handle ต่อนะ
             System.out.println("-------------handleMessage-------------");
             String message = (String) msg.obj;
             switch (message) {
@@ -443,13 +456,14 @@ public class MainActivity extends AppCompatActivity {
                 /*================= When Click [Find Reader Button]   =================*/
                 case "findreader": {
                     int listOption = NA_POPUP + NA_FIRST + NA_SCAN + NA_BT + NA_USB;     //0xD3 USB & BT Reader
-                    setEnableButton(false, false, false, false);
-                    setText(tv_Reader, "Reader scanning...");  // Popup to show scanning หลังจากกดปุ่ม Reader
+                    setEnableButton(false, false, false, false);  // พอกดปุ่ม Find Reader มันจะ disable ปุ่มทั้งหมดให้กดไม่ได้ เพื่อให้มี popup โผล่ขึ้นมาว่า กำลังค้นหา reader อยู่นะ
+                    setText(tv_Reader, "QQ Reader scanning...");  // TODO: ตรงนี้ที่โชว์ด้านบนของป่ม Find Reader นะ
 
                     /*================= get Reader List =================*/
                     bReturnResponseFinish = false;
                     clearReturnResponse();
 
+                    // ชุดนี้เป็น code ที่ไว้หา listOption เพื่อให้ได้ 211 นะ
                     if ((listOption & NA_SCAN) != 0 && (listOption & NA_BT) != 0) {
                         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                                 && displayLocationSettingsRequest()) {
@@ -459,8 +473,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    System.out.println("listOptinon  => " + listOption);
-                    NALibs.getReaderListNA(listOption);  // listOption = 211 (int นะ)
+                    System.out.println("listOption  => " + listOption);
+                    NALibs.getReaderListNA(listOption);
+
+//                    NALibs.getReaderListNA(211);  // listOption = 211 (int นะ)
 
                     waitResponse();
 
